@@ -49,6 +49,21 @@ class GameState():
             self.wKLocation=(move.endRow,move.endCol)
         elif move.pieceMoved=='bK':
             self.bKLocation=(move.endRow,move.endCol)
+        # Enpassant
+        if move.isEnpassantMove:
+            self.board[move.startRow][move.endCol]='--'  # extracting pawn
+        # update enpassantPossible variable
+        if move.pieceMoved[1]=='p' and abs(move.startRow-move.endRow) == 2:  # pawn advanced 2sqs
+            self.enpassantPossible=((move.startRow+move.endRow)//2, move.startCol)
+        else:
+            self.enpassantPossible=()
+
+        self.enpassantPossibleLog.append(self.enpassantPossible)
+        
+        # pawn promotion
+        if move.isPawnPromotion:
+            promotedPiece=input("Promote to Q, R, B, or N: ")
+            self.board[move.endRow][move.endCol]=move.pieceMoved[0]+promotedPiece
 
     def undoMove(self):
         """
@@ -63,6 +78,14 @@ class GameState():
                 self.wKLocation=(move.startRow, move.startCol)
             elif move.pieceMoved=='bK':
                 self.bKLocation=(move.startRow, move.startCol)
+        #undoing an enpassant
+        if move.isEnpassantMove:
+            self.board[move.endRow][move.endCol]='--'  # leave landing square blank
+            self.board[move.startRow][move.endCol]=move.pieceCaptured
+            self.enpassantPossible=(move.endRow, move.endCol)
+        # undo a 2 square pawn advance
+        if move.pieceMoved[1]=='p' and abs(move.startRow-move.endRow)==2:
+            self.enpassantPossible=()
     
    def getValidMoves(self):  # updated using advanced check algorithm
         """
@@ -413,7 +436,7 @@ class Move():
                  'e':4,'f':5,'g':6,'h':7}
     colToFile = {v:k for k,v in fileToCol.items()}
 
-    def __init__(self,startSq, endSq, board,isEnpassantMove=False, pawnPromotion=False,isCastleMove=False):
+    def __init__(self,startSq, endSq, board,isEnpassantMove=False):
         self.startRow=startSq[0]
         self.startCol=startSq[1]
         self.endRow=endSq[0]
@@ -421,7 +444,13 @@ class Move():
         self.pieceMoved=board[self.startRow][self.startCol]
         self.pieceCaptured=board[self.endRow][self.endCol]
         self.moveID=self.startRow*1000+self.startCol*100+self.endRow*10+self.endCol  # creates unique number for each move
-        
+        # pawn promotion
+        self.isPawnPromotion=((self.pieceMoved=='wp' and self.endRow==0) or (self.pieceMoved=='bp' and self.endRow==7))
+        # Enpassant
+        self.isEnpassantMove=isEnpassantMove
+        if self.isEnpassantMove:
+            self.pieceCaptured='wp' if self.pieceMoved=='bp' else 'bp'  # enpassant captures opposite colored pawn    
+    
     def __eq__(self,other):
         """
         Overrides the equals method
