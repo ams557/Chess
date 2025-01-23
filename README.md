@@ -1,1 +1,3 @@
-# chess
+---
+title: Chess
+---
