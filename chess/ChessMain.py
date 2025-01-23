@@ -62,13 +62,12 @@ def main():
 
                 if len(playerClicks)==2:  # after 2nd click
                     move = ChessEngine.Move(playerClicks[0],playerClicks[1],gamestate.board)
-                    print(move.getChessNotation())
                     if move in validMoves:
                         gamestate.makeMove(move)
                         moveMade=True
-                    sqSelected=()  # reset user clicks
-                    playerClicks=[]  # clear player clicks
-                    
+                    else:
+                        playerClicks=[sqSelected]
+                                   
             # key handler
             elif event.type==p.KEYDOWN:
                 if event.key==p.K_z:  # undo when 'z' is pressed
