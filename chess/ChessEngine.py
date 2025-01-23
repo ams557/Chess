@@ -572,7 +572,7 @@ class Move():
             return self.moveID==other.moveID
         return False
     
-    def getChessNotation(self):
+       def getChessNotation(self):
         """
         Converts input to pseudo chess notation.
             - Note it is possible to make this real chess notation
@@ -581,3 +581,26 @@ class Move():
 
     def getRankFile(self,row,col):
         return self.colToFile[col]+self.rowToRank[row]
+
+    # overrriding the string method
+    def __str__(self):
+        # castle move
+        if self.isCastleMove:
+            # "O-O" kingside castle "O-O-O" # queenside castle
+            return "O-O" if self.endCol==6 else "O-O-O"
+        endSquare=self.getRankFile(self.endRow,self.endCol)
+        #pawn moves
+        if self.pieceMoved[1]=='p':
+            if self.isCapture:
+                return self.colToFile[self.startCol]+"x"+endSquare
+        else:
+            return endSquare+"Q" if self.isPawnPromotion else endSquare
+        #piece moves
+        moveString=self.pieceMoved[1]
+        if self.isCapture:
+            moveString+="x"
+        return moveString+endSquare
+        # pawn promotions
+        # two of the same type of piece moving to a square
+        # adding "+" for check and "#" for checkmate
+
