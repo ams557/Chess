@@ -81,13 +81,13 @@ def main():
                     animate=False
                     gameOver=False
                 if event.key==p.K_r: # reset the game when 'r' is pressed
-                gamestate=ChessEngine.GameState()
-                validMoves=gamestate.getValidMoves()
-                sqSelected=()
-                playerClicks=[]
-                moveMade=False
-                animate=False
-                gameOver=False
+                    gamestate=ChessEngine.GameState()
+                    validMoves=gamestate.getValidMoves()
+                    sqSelected=()
+                    playerClicks=[]
+                    moveMade=False
+                    animate=False
+                    gameOver=False
               
         if moveMade:
             if animate:
@@ -139,7 +139,7 @@ def drawBoard(screen):
     Function draws board.
         - Note: Top left square of board (either perspective) is always white.
     """
-    clobal colors
+    global colors
     colors = [p.Color('light yellow'),p.Color('dark grey')]
     for row in range(DIMENSION):
         for column in range(DIMENSION):
