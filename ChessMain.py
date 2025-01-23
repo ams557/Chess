@@ -31,14 +31,18 @@ def main():
     clock=p.time.Clock()
     screen.fill(p.Color('white'))
     gamestate=ChessEngine.GameState()
- 
+    validMoves=gamestate.getValidMoves()
+    moveMade=False  # flag variable for when a move is made
+        # only when gamestate changes ie when user makes a valid move) is the list of possible/valid moves recalc/d
+            # This prevents recalling move every frame which can be computationally expensive
+    
     loadImages()  #only done once before while loop
-    running = True
-    sqSelected = ()  # no sq is selected, keeps track of last click of user - tuple (row, col)
-    playerClicks = []  # keeps track of player clicks - two tuples: [(rows,cols),(rows up/down,cols left/right)]
-   
-    while running:
-        humanTurn=(gamestate.whiteToMove and playerOne) or (not(gamestate.whiteToMove) and playerTwo)  
+    
+    running=True
+    sqSelected=()  # no sq is selected, keeps track of last click of user - tuple (row, col)
+    playerClicks=[]  # keeps track of player clicks - two tuples: [(rows,cols),(rows up/down,cols left/right)]
+    
+    while running: 
         for event in p.event.get():
             if event.type==p.QUIT:
                 running=False
@@ -46,24 +50,36 @@ def main():
                 sys.exit()
             # mouse handler
             elif event.type==p.MOUSEBUTTONDOWN:
-                    location=p.mouse.get_pos() # (x,y) location of mouse
-                    col=location[0]//SQ_SIZE
-                    row=location[1]//SQ_SIZE
-                    if sqSelected==(row,col) or col>=8:  # user hit same square twice
-                        sqSelected=()  # deselect
-                        playerClicks=[]  # clear player clicks
-                    else:
-                        sqSelected=(row,col)
-                        playerClicks.append(sqSelected)  # append for both 1st and 2nd clicks
+                location=p.mouse.get_pos() # (x,y) location of mouse
+                col=location[0]//SQ_SIZE
+                row=location[1]//SQ_SIZE
+                if sqSelected==(row,col):  # user hit same square twice
+                    sqSelected=()  # deselect
+                    playerClicks=[]  # clear player clicks
+                else:
+                    sqSelected=(row,col)
+                    playerClicks.append(sqSelected)  # append for both 1st and 2nd clicks
 
-                    if len(playerClicks)==2:  # after 2nd click
-                        move = ChessEngine.Move(playerClicks[0],playerClicks[1],gamestate.board)
-                        print(move.getChessNotation())
+                if len(playerClicks)==2:  # after 2nd click
+                    move = ChessEngine.Move(playerClicks[0],playerClicks[1],gamestate.board)
+                    print(move.getChessNotation())
+                    if move in validMoves:
                         gamestate.makeMove(move)
-                        sqSelected=()  # reset user clicks
-                        playerClicks=[]  # clear player clicks
+                        moveMade=True
+                    sqSelected=()  # reset user clicks
+                    playerClicks=[]  # clear player clicks
+                    
+            # key handler
+            elif event.type==p.KEYDOWN:
+                if event.key==p.K_z:  # undo when 'z' is pressed
+                    gamestate.undoMove()
+                    moveMade=True
+              
+        if moveMade:
+            validMoves = gamestate.getValidMoves()
+            moveMade = False
         
-        drawGameState(screen,gamestate,validMoves,sqSelected,moveLogFont)    
+        drawGameState(screen,gamestate)
         clock.tick(MAX_FPS)
         p.display.flip()
 
@@ -72,7 +88,7 @@ def drawGameState(screen, gamestate, validMoves, sqSelected,moveLogFont):
     Function responsible for all graphics in current gamestate
     """
     drawBoard(screen)  # 1) draws squares on board
-    # 2) Highlights selectged squares (Later)
+    2) Highlight selectged squares (later)
     drawPieces(screen,gamestate.board)  # 3) draw pieces on top of squares
     drawMoveLog(screen,gamestate,moveLogFont)
 
