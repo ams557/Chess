@@ -18,6 +18,12 @@ class GameState():
             ['wp','wp','wp','wp','wp','wp','wp','wp'],
             ['wR','wN','wB','wQ','wK','wB','wN','wR']]
 
+        self.moveFunctions={'p':self.getPawnMoves,
+                    'R':self.getRookMoves,
+                    'N':self.getKnightMoves,
+                    'K':self.getKingMoves,
+                    'Q':self.getQueenMoves,
+                    'B':self.getBishopMoves}
         self.whiteToMove=True
         self.moveLog=[]
     
@@ -39,7 +45,7 @@ class GameState():
             self.board[move.startRow][move.startCol]=move.pieceMoved
             self.board[move.endRow][move.endCol]=move.pieceCaptured
     
-    def getValidMoves_Naive(self):
+    def getValidMoves(self):
         """
         Crates a list of valid moves, factoring in check conditions
         """
@@ -61,13 +67,41 @@ class GameState():
                         self.getPawnMoves(row,col,moves)
                     if piece=="R":
                         self.getRookMoves(row,col,moves)
+                    self.moveFunctions[piece](row,col,moves)  # calls appropriate move function based piece type
         return moves
 
     def getPawnMoves(self,row,col,moves):
         """
         Gets all pawn moves for the pawn located at the row, col and add all these moves to the list of possible moves
         """
-        pass
+        if self.whiteToMove:  #white pawn moves
+            if self.board[row-1][col]=='--':  # pawn advances one square
+                if not piecePinned or pinDirection==(-1,0):
+                    moves.append(Move((row,col),(row-1,col),self.board))
+                    if row == 6 and self.board[row-2][col]=='--':  # pawn advances two squares
+                        moves.append(Move((row,col),(row-2,col),self.board))
+            if col-1>=0:  # captures to the left
+                if self.board[row-1][col-1][0]=='b':  # enemy piece to capture
+                    if not piecePinned or pinDirection==(-1,-1):
+                        moves.append(Move((row, col),(row-1,col-1),self.board))
+            if col+1<=7:  # captures to the right
+                if self.board[row-1][col+1][0]=='b':  # enemy piece to capture
+                    if not piecePinned or pinDirection==(-1,1):
+                        moves.append(Move((row,col),(row-1,col+1),self.board))
+        else:  # black pawn moves
+            if self.board[row+1][col]=='--':  # pawn advances one square
+                if not piecePinned or pinDirection==(1,0):
+                    moves.append(Move((row,col),(row+1,col),self.board))
+                    if row==1 and self.board[row+2][col]=='--':  # pawn advances two squares
+                        moves.append(Move((row,col),(row+2,col),self.board))
+            if col-1>=0:  # captures to the left
+                if self.board[row+1][col-1][0] == 'w':  # enemy piece to capture
+                    if not piecePinned or pinDirection == (1,-1):
+                        moves.append(Move((row, col), (row+1, col-1), self.board))
+            if col+1<=7:  # captures to the right
+                if self.board[row+1][col+1][0]=='w':  # enemy piece to capture
+                    if not piecePinned or pinDirection == (1,1):
+                        moves.append(Move((row, col), (row+1, col+1), self.board))
 
     def getRookMoves(self,row,col,moves):
         """
@@ -120,7 +154,16 @@ class Move():
         self.endCol=endSq[1]
         self.pieceMoved=board[self.startRow][self.startCol]
         self.pieceCaptured=board[self.endRow][self.endCol]
+        self.moveID=self.startRow*1000+self.startCol*100+self.endRow*10+self.endCol  # creates unique number for each move
         
+    def __eq__(self,other):
+        """
+        Overrides the equals method
+        """
+        if isinstance(other,Move):  # makes sure `other` object is instance of the Move
+            return self.moveID==other.moveID
+        return False
+    
     def getChessNotation(self):
         """
         Converts input to pseudo chess notation.
