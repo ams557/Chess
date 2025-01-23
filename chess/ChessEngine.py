@@ -26,6 +26,8 @@ class GameState():
                     'B':self.getBishopMoves}
         self.whiteToMove=True
         self.moveLog=[]
+        self.wKLocation=(7,4)
+        self.bKLocation=(0,4)
     
     def makeMove(self,move):
         """
@@ -35,6 +37,12 @@ class GameState():
         self.board[move.endRow][move.endCol]=move.pieceMoved  # updates sq after move w/ the piece moved
         self.moveLog.append(move)  # log move sq to allow for undo
         self.whiteToMove=not(self.whiteToMove)  # swap players
+        
+        # Update the king's location if moved
+        if move.pieceMoved=='wK':
+            self.wKLocation=(move.endRow,move.endCol)
+        elif move.pieceMoved=='bK':
+            self.bKLocation=(move.endRow,move.endCol)
 
     def undoMove(self):
         """
@@ -44,15 +52,53 @@ class GameState():
             move = self.moveLog.pop()
             self.board[move.startRow][move.startCol]=move.pieceMoved
             self.board[move.endRow][move.endCol]=move.pieceCaptured
+        # update king's position if move undone
+            if move.pieceMoved=='wK':
+                self.wKLocation=(move.startRow, move.startCol)
+            elif move.pieceMoved=='bK':
+                self.bKLocation=(move.startRow, move.startCol)
     
     def getValidMoves(self):
         """
         Crates a list of valid moves, factoring in check conditions
         """
         # 1. Generate all possible moves
-        moves = self.getAllPossibleMoves()  # for now will not worry about checks
+        moves = self.getAllPossibleMoves()
+        # 2. For each move, make the move
+        for i in range(len(moves)-1,-1,-1):  # When removing from a list w/ for loop, go backwards b/c index doesn't shift w/ iteration
+            self.makeMove(moves[i])
+            # 3. Generate all oppt's moves
+                # Done in `squareUnderAttack()` fxn
+            # 4. If they attk king, move is invalid
+                # Done in `inCheck()` fxn
+            self.whiteToMove = not self.whiteToMove  # need to switch turns before calling `inCheck()` b/c `makeMove()` switched turns
+            if self.inCheck():  # 5. if king in check, remove move from list of valid moves
+                moves.remove(moves[i])
+            self.whiteToMove = not self.whiteToMove  # need to switch one more time for even parity
+            self.undoMove()
         return moves
 
+    def inCheck(self):
+        '''
+        Determine if current player is in check
+        '''
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.wKLocation[0],self.wKLocation[1])
+        else:
+            return self.squareUnderAttack(self.bKLocation[0], self.bKLocation[1])
+    
+    def squareUnderAttack(self,row,col):
+        '''
+        Determine if the enemy can attack the square (row,col)
+        '''
+        self.whiteToMove=not(self.whiteToMove)  # switch to oppt turn
+        oppMoves=self.getAllPossibleMoves()
+        self.whiteToMove=not(self.whiteToMove)  # reset turn even if stmnt sq not under attack
+        for move in oppMoves:
+            if move.endRow==row and move.endCol==col:  # square is under attack
+                return True
+        return False  # by default a square is not under attack
+    
     def getAllPossibleMoves(self):
         """
         Creates list of all possible moves, not considering checks
