@@ -153,13 +153,22 @@ class GameState():
         """
         Gets all Queen moves for the queen located at the row,col and add all these moves to the list of possible moves
         """
-        pass
+        self.getBishopMoves(row,col,moves)
+        self.getRookMoves(row,col,moves)
 
     def getKingMoves(self,row,col,moves):
         """
         Gets all King moves for the king located at the row,col and add all these moves to the list of potential moves
         """
-        pass
+        kingMoves = ((-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1))
+        allyColor = "w" if self.whiteToMove else "b"
+        for move in kingMoves:
+            endRow=row+move[0]
+            endCol=col+move[1]
+            if 0<= endRow<8 and 0<=endCol<8:
+                endPiece=self.board[endRow][endCol]
+                if endPiece[0]!=allyColor:  # not an aly piece (empty or enemy piece)
+                    moves.append(Move((row,col),(endRow,endCol),self.board))
 
     def getKnightMoves(self,row,col,moves):
         """
